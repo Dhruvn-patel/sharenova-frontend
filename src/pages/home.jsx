@@ -348,8 +348,7 @@ const Home = () => {
                             type="text"
                             id="share-url"
                             readonly=""
-                            value={`${process.env.REACT_APP_API}/receive/${shareCode}`}
-                            fdprocessedid="ikadmv"
+                            value={`${window.location.origin}/receive/${shareCode}`}
                             onClick={(e) => {
                               e.target.select();
                               navigator.clipboard.writeText(e.target.value);
