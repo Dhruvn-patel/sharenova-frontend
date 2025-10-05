@@ -1,54 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
   const [visitors, setVisitors] = useState(0);
   const [filesTransfered, setFilesTransfered] = useState(0);
   const isNew = localStorage.getItem("isNew");
-  const fetchVisitors = async () => {
-    let response = await fetch(`${process.env.REACT_APP_SERVER_API}/visit`, {
+
+  const fetchVisitors = useCallback(async () => {
+    const response = await fetch(`${process.env.REACT_APP_SERVER_API}/visit`, {
       method: "GET",
     });
-    let data = await response.json();
+    const data = await response.json();
     setVisitors(data.NoOfVisitors);
     setFilesTransfered(data.NoOfFilesTransfered);
-  };
-  const addVisitor = async () => {
+  }, []); //
+
+  const addVisitor = useCallback(async () => {
     if (!isNew) {
-      let response = await fetch(`${process.env.REACT_APP_SERVER_API}/visit`, {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_API}/visit`, {
         method: "PUT",
       });
-      let data = await response.json();
+      const data = await response.json();
       setVisitors(data.NoOfVisitors);
       localStorage.setItem("isNew", false);
     }
-  };
+  }, [isNew]);
   useEffect(() => {
     addVisitor();
     fetchVisitors();
-    // Listen for the beforeinstallprompt event
-    window.addEventListener("beforeinstallprompt", (e) => {
-      // Prevent the mini-infobar from appearing on mobile
-      e.preventDefault();
-      // Store the event so it can be triggered later
-      setDeferredPrompt(e);
-    });
-  }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      // Show the install prompt
-      deferredPrompt.prompt();
-      // Wait for the user's response to the prompt
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response: ${outcome}`);
-      // Clear the deferred prompt so it can't be used again
-      setDeferredPrompt(null);
-    }
-  };
+    const handler = (e) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, [addVisitor, fetchVisitors]);
   return (
     <header className="app-header">
       <Toaster position="top-right" containerStyle={{ zIndex: 100 }} reverseOrder={false} />
